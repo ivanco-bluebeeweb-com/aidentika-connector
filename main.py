@@ -17,7 +17,7 @@ _LOCAL = (
     "schemas", "schemas_generation", "schemas_manage",
     "handlers", "handlers_core", "handlers_generate",
     "handlers_projects", "handlers_webhooks",
-    "panels",
+    "panels", "panels_settings",
 )
 for _mod in _LOCAL:
     sys.modules.pop(_mod, None)
@@ -25,3 +25,4 @@ for _mod in _LOCAL:
 from app import ext, chat  # noqa: E402,F401
 import handlers  # noqa: E402,F401
 import panels  # noqa: E402,F401
+import panels_settings  # noqa: E402,F401

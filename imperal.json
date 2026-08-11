@@ -3548,6 +3548,15 @@
       "icon": "🔎",
       "refresh": "manual",
       "center_overlay": true
+    },
+    {
+      "panel_id": "aid_settings",
+      "slot": "center",
+      "title": "App settings",
+      "tree": {},
+      "icon": "⚙️",
+      "refresh": "manual",
+      "center_overlay": true
     }
   ]
 }

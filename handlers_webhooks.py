@@ -50,7 +50,11 @@ async def create_aidentika_webhook(ctx, params: CreateAidentikaWebhookParams) ->
     res = AidentikaWebhookCreated(**data)
     return ActionResult.success(
         data=res,
-        summary=f"Webhook #{res.id} created for {', '.join(res.events)}. Secret shown once -- save it now.",
+        summary=(
+            f"Webhook #{res.id} created for {', '.join(res.events) or 'all events'}. "
+            f"Signing secret (shown only now, copy it!): {res.secret}"
+        ),
+        refresh_panels=["aid_settings"],
     )
 
 
@@ -99,6 +103,7 @@ async def delete_aidentika_webhook(ctx, params: DeleteAidentikaWebhookParams) ->
     return ActionResult.success(
         data=DeleteResult(deleted=True, message=f"Webhook {params.webhook_id} deleted."),
         summary=f"Webhook {params.webhook_id} deleted.",
+        refresh_panels=["aid_settings"],
     )
 
 

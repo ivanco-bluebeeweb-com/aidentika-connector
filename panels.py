@@ -1,8 +1,19 @@
-"""Panel UI: right = connect + balance/pricing, left = recent generation
-results, center = one action's detail. Same three-slot shape as DataForSEO
+"""Panel UI: right = connect + balance/pricing + "App settings" entry point,
+left = recent generation results, center = either one action's detail OR
+(when opened via "App settings") the single settings screen that holds
+EVERY configurable thing this app has -- connection (connect/rotate/
+disconnect) and webhooks (add/delete). Same three-slot shape as DataForSEO
 Connector, adapted for Aidentika: there is no local store cache here --
 projects/cards/results all live on Aidentika's own servers, so panels call
 aid_client directly (read-only GET calls) instead of querying ctx.store.
+
+Follows ~/UI_INTERFACE_STANDARD.md: exactly one secondary "App settings"
+button in the sidebar (see aid_connect_panel), it renders the settings
+screen into the CENTER slot (aid_settings_panel, not a modal), every
+setting there actually persists via a write chat.function, each of those
+returns ActionResult.summary (shown as the platform's green
+success/error notice) and refresh_panels naming exactly the slots that
+need to change.
 """
 from __future__ import annotations
 
@@ -12,10 +23,43 @@ import aid_client as aid
 from app import ext
 import handlers as h
 
+_WEBHOOK_EVENT_OPTIONS = [
+    {"value": "generation.completed", "label": "Generation completed"},
+    {"value": "generation.failed", "label": "Generation failed"},
+    {"value": "edit.completed", "label": "Edit completed"},
+    {"value": "edit.failed", "label": "Edit failed"},
+    {"value": "video.completed", "label": "Video completed"},
+    {"value": "video.failed", "label": "Video failed"},
+]
+
 
 async def _connection_status(ctx) -> tuple[bool, str]:
     key = await h._get_api_key(ctx)
     return bool(key), ("Connected" if key else "Not connected")
+
+
+def _settings_button() -> ui.UINode:
+    """The one required secondary entry point into the settings screen."""
+    return ui.Button(
+        "App settings", variant="secondary", size="sm", full_width=True,
+        icon="settings", on_click=ui.Call("__panel__aid_settings"),
+    )
+
+
+def _connect_form(submit_label: str, api_key_placeholder: str = "API key (ak_...)") -> ui.UINode:
+    return ui.Stack(direction="v", gap=2, children=[
+        ui.Text(
+            "Get an API key at app.aidentika.com -> Profile -> API -> "
+            "Create key (max 10 per account). Verified before saving.",
+            variant="caption",
+        ),
+        ui.Link(label="Open app.aidentika.com", href="https://app.aidentika.com/"),
+        ui.Form(
+            action="connect_aidentika",
+            submit_label=submit_label,
+            children=[ui.Password(param_name="api_key", placeholder=api_key_placeholder)],
+        ),
+    ])
 
 
 def _connect_card(connected: bool) -> ui.UINode:
@@ -25,26 +69,13 @@ def _connect_card(connected: bool) -> ui.UINode:
             subtitle="Connected",
             content=ui.Stack(direction="v", gap=2, children=[
                 ui.Text("Your API key is saved and verified.", variant="caption"),
-                ui.Button("Disconnect", variant="danger", size="sm",
-                          on_click=ui.Call("disconnect_aidentika")),
+                _settings_button(),
             ]),
         )
     return ui.Card(
         title="Connect Aidentika",
         subtitle="Bring your own Aidentika account",
-        content=ui.Stack(direction="v", gap=2, children=[
-            ui.Text(
-                "Get an API key at app.aidentika.com -> Profile -> API -> "
-                "Create key (max 10 per account). Verified before saving.",
-                variant="caption",
-            ),
-            ui.Link(label="Open app.aidentika.com", href="https://app.aidentika.com/"),
-            ui.Form(
-                action="connect_aidentika",
-                submit_label="Verify and connect",
-                children=[ui.Password(param_name="api_key", placeholder="API key (ak_...)")],
-            ),
-        ]),
+        content=_connect_form("Verify and connect"),
     )
 
 
