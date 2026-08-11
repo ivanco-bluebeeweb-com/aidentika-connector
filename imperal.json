@@ -3518,6 +3518,36 @@
       "icon": "KeyRound",
       "refresh": "manual",
       "center_overlay": false
+    },
+    {
+      "panel_id": "aid_connect",
+      "slot": "right",
+      "title": "Aidentika",
+      "tree": {},
+      "icon": "🪄",
+      "refresh": "manual",
+      "center_overlay": false,
+      "default_width": 300,
+      "min_width": 240,
+      "max_width": 420
+    },
+    {
+      "panel_id": "aid_results",
+      "slot": "left",
+      "title": "Results",
+      "tree": {},
+      "icon": "🖼️",
+      "refresh": "manual",
+      "center_overlay": false
+    },
+    {
+      "panel_id": "aid_detail",
+      "slot": "center",
+      "title": "Result detail",
+      "tree": {},
+      "icon": "🔎",
+      "refresh": "manual",
+      "center_overlay": true
     }
   ]
 }

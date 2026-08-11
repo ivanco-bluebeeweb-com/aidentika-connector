@@ -130,7 +130,7 @@ async def aid_detail_panel(ctx, action_id: int | str = "", **kwargs) -> object:
 
     rows: list[ui.UINode] = [
         ui.Text(f"Action #{data.get('action_id')} -- {data.get('type', '?')}", variant="title"),
-        ui.Badge(label=data.get("status", "?"), variant=(
+        ui.Badge(label=data.get("status", "?"), color=(
             "success" if data.get("status") == "completed"
             else "danger" if data.get("status") == "failed"
             else "warning"
