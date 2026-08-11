@@ -1,0 +1,3523 @@
+{
+  "manifest_schema_version": 3,
+  "sdk_version": "5.9.12",
+  "app_id": "aidentika-connector",
+  "version": "0.1.0",
+  "name": "Aidentika Connector",
+  "description": "Generate AI product photos, infographic cards, and short videos from your own product photos via your Aidentika account -- styled photo/card/video generation, free product analysis, image uploads for reuse, balance/pricing/category lookups, projects and cards to organize results, webhooks for completion notifications, and free AI helpers that draft marketing text and video scenarios. Bring your own Aidentika API key; every call runs on your own sparks balance.",
+  "icon": "icon.svg",
+  "actions_explicit": true,
+  "system": false,
+  "capabilities": [
+    "aidentika:read",
+    "aidentika:write"
+  ],
+  "tools": [
+    {
+      "name": "connect_aidentika",
+      "description": "Connect Aidentika by saving your API key, after checking it actually works. Get an API key at app.aidentika.com -> Profile -> API -> Create key (max 10 keys per account).",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "aidentika.provider.connected"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "api_key": {
+            "description": "Your Aidentika API key (starts with ak_) from app.aidentika.com -> Profile -> API",
+            "title": "Api Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "api_key"
+        ],
+        "title": "ConnectAidentikaParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "connected": {
+            "title": "Connected",
+            "type": "boolean"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "connected",
+          "message"
+        ],
+        "title": "ProviderConnection",
+        "type": "object"
+      },
+      "event": "aidentika-connector.connect_aidentika",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "disconnect_aidentika",
+      "description": "Disconnect Aidentika: deletes the saved API key. Existing projects, cards and results in your Aidentika account are not affected.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "aidentika.provider.disconnected"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "description": "Empty params for parameterless read tools.",
+        "properties": {},
+        "title": "NoParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "disconnected": {
+            "title": "Disconnected",
+            "type": "boolean"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "disconnected",
+          "message"
+        ],
+        "title": "DisconnectResult",
+        "type": "object"
+      },
+      "event": "aidentika-connector.disconnect_aidentika",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "get_aidentika_balance",
+      "description": "Check your current Aidentika sparks balance -- total, available, and held for in-flight generations.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "description": "Empty params for parameterless read tools.",
+        "properties": {},
+        "title": "NoParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "balance": {
+            "title": "Balance",
+            "type": "integer"
+          },
+          "available": {
+            "title": "Available",
+            "type": "integer"
+          },
+          "holds": {
+            "title": "Holds",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "balance",
+          "available",
+          "holds"
+        ],
+        "title": "BalanceInfo",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "get_aidentika_pricing",
+      "description": "Read the sparks cost of every Aidentika operation: photo/card generation, edits, and 5s/10s video.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "description": "Empty params for parameterless read tools.",
+        "properties": {},
+        "title": "NoParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "generation": {
+            "title": "Generation",
+            "type": "integer"
+          },
+          "improvement": {
+            "title": "Improvement",
+            "type": "integer"
+          },
+          "video_5sec": {
+            "title": "Video 5Sec",
+            "type": "integer"
+          },
+          "video_10sec": {
+            "title": "Video 10Sec",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "generation",
+          "improvement",
+          "video_5sec",
+          "video_10sec"
+        ],
+        "title": "PricingInfo",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "list_aidentika_categories",
+      "description": "List all product categories and their shooting concepts. Use the category_id/concept_id values in generation calls. Cached 24h by Aidentika.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "description": "Empty params for parameterless read tools.",
+        "properties": {},
+        "title": "NoParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "CategoryItem": {
+            "properties": {
+              "id": {
+                "title": "Id",
+                "type": "string"
+              },
+              "name": {
+                "title": "Name",
+                "type": "string"
+              },
+              "concepts": {
+                "items": {
+                  "$ref": "#/$defs/ConceptItem"
+                },
+                "title": "Concepts",
+                "type": "array"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "title": "CategoryItem",
+            "type": "object"
+          },
+          "ConceptItem": {
+            "properties": {
+              "id": {
+                "title": "Id",
+                "type": "string"
+              },
+              "name": {
+                "title": "Name",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "title": "ConceptItem",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "categories": {
+            "items": {
+              "$ref": "#/$defs/CategoryItem"
+            },
+            "title": "Categories",
+            "type": "array"
+          }
+        },
+        "title": "CategoriesList",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "upload_product_image",
+      "description": "Upload a product image once (base64) to reuse its upload_id across several generation requests, instead of re-sending the base64 data each time. Valid for 1 hour; max 20 active uploads per account.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "aidentika.image.uploaded"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "$defs": {
+          "ImageInput": {
+            "description": "One product/reference image -- provide ONE of url or data.\n\n`data` accepts base64-encoded image bytes OR an `upload_id` (upl_...)\nreturned by `upload_product_image`, per Aidentika's ImageInput schema.",
+            "properties": {
+              "url": {
+                "anyOf": [
+                  {
+                    "maxLength": 2048,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Public HTTPS URL of the image",
+                "title": "Url"
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "maxLength": 21000000,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Base64-encoded image bytes, or an upload_id (upl_...)",
+                "title": "Data"
+              },
+              "media_type": {
+                "default": "image/jpeg",
+                "description": "MIME type hint, used with data",
+                "title": "Media Type",
+                "type": "string"
+              }
+            },
+            "title": "ImageInput",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "image": {
+            "$ref": "#/$defs/ImageInput",
+            "description": "Image to upload (base64 data or a public HTTPS url)"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "title": "UploadProductImageParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "upload_id": {
+            "title": "Upload Id",
+            "type": "string"
+          },
+          "expires_in": {
+            "default": 3600,
+            "title": "Expires In",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "upload_id"
+        ],
+        "title": "UploadResult",
+        "type": "object"
+      },
+      "event": "aidentika-connector.upload_product_image",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "analyze_product",
+      "description": "Analyze a product photo for free (no sparks spent): detects category, product name, and key selling qualities. Use the result to fill in category_id/product_name/comment on a generation call.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "$defs": {
+          "ImageInput": {
+            "description": "One product/reference image -- provide ONE of url or data.\n\n`data` accepts base64-encoded image bytes OR an `upload_id` (upl_...)\nreturned by `upload_product_image`, per Aidentika's ImageInput schema.",
+            "properties": {
+              "url": {
+                "anyOf": [
+                  {
+                    "maxLength": 2048,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Public HTTPS URL of the image",
+                "title": "Url"
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "maxLength": 21000000,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Base64-encoded image bytes, or an upload_id (upl_...)",
+                "title": "Data"
+              },
+              "media_type": {
+                "default": "image/jpeg",
+                "description": "MIME type hint, used with data",
+                "title": "Media Type",
+                "type": "string"
+              }
+            },
+            "title": "ImageInput",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "image": {
+            "$ref": "#/$defs/ImageInput",
+            "description": "Product image to analyze"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "title": "AnalyzeProductParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Category Id"
+          },
+          "product_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Product Name"
+          },
+          "qualities": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Qualities",
+            "type": "array"
+          }
+        },
+        "title": "AnalyzeResult",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "generate_product_photo",
+      "description": "Generate styled product photo(s) from 1-5 reference images. All fields except images are optional -- category/concept/product name are auto-detected from the photos if omitted. Runs asynchronously: returns an action_id, poll get_action_status until completed, then download_result to get the image.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "aidentika.generation.started"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "$defs": {
+          "ImageInput": {
+            "description": "One product/reference image -- provide ONE of url or data.\n\n`data` accepts base64-encoded image bytes OR an `upload_id` (upl_...)\nreturned by `upload_product_image`, per Aidentika's ImageInput schema.",
+            "properties": {
+              "url": {
+                "anyOf": [
+                  {
+                    "maxLength": 2048,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Public HTTPS URL of the image",
+                "title": "Url"
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "maxLength": 21000000,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Base64-encoded image bytes, or an upload_id (upl_...)",
+                "title": "Data"
+              },
+              "media_type": {
+                "default": "image/jpeg",
+                "description": "MIME type hint, used with data",
+                "title": "Media Type",
+                "type": "string"
+              }
+            },
+            "title": "ImageInput",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "images": {
+            "description": "1-5 product reference images",
+            "items": {
+              "$ref": "#/$defs/ImageInput"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "title": "Images",
+            "type": "array"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Append the generated Card to an existing Project; omit for the key's default 'API Inbox'",
+            "title": "Project Id"
+          },
+          "client_group_id": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Arbitrary correlation tag echoed back in results/webhooks",
+            "title": "Client Group Id"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Omit for auto-detection from images",
+            "title": "Category Id"
+          },
+          "concept_id": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Omit to use the default concept for the category",
+            "title": "Concept Id"
+          },
+          "product_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Product Name"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "User wishes / additional description",
+            "title": "Comment"
+          },
+          "photo_style": {
+            "default": "classic",
+            "description": "'classic' or 'home'",
+            "title": "Photo Style",
+            "type": "string"
+          },
+          "aspect_ratio": {
+            "default": "3:4",
+            "description": "9:16, 4:3, 1:1, 16:9, or 3:4",
+            "title": "Aspect Ratio",
+            "type": "string"
+          },
+          "resolution": {
+            "default": "2K",
+            "description": "Output resolution: 1K, 2K (default), 4K -- affects sparks cost",
+            "title": "Resolution",
+            "type": "string"
+          },
+          "webhook_url": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Webhook Url"
+          }
+        },
+        "required": [
+          "images"
+        ],
+        "title": "GeneratePhotoParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "integer"
+          },
+          "status": {
+            "default": "pending",
+            "title": "Status",
+            "type": "string"
+          },
+          "poll_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Poll Url"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Project Id"
+          },
+          "card_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Card Id"
+          }
+        },
+        "required": [
+          "action_id"
+        ],
+        "title": "GenerateResult",
+        "type": "object"
+      },
+      "event": "aidentika-connector.generate_product_photo",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "generate_product_card",
+      "description": "Generate an infographic/marketing card from 1-5 reference images -- highlights text (user_text) over a designed layout. Runs asynchronously: returns an action_id, poll get_action_status until completed, then download_result.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "aidentika.generation.started"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "$defs": {
+          "ImageInput": {
+            "description": "One product/reference image -- provide ONE of url or data.\n\n`data` accepts base64-encoded image bytes OR an `upload_id` (upl_...)\nreturned by `upload_product_image`, per Aidentika's ImageInput schema.",
+            "properties": {
+              "url": {
+                "anyOf": [
+                  {
+                    "maxLength": 2048,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Public HTTPS URL of the image",
+                "title": "Url"
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "maxLength": 21000000,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Base64-encoded image bytes, or an upload_id (upl_...)",
+                "title": "Data"
+              },
+              "media_type": {
+                "default": "image/jpeg",
+                "description": "MIME type hint, used with data",
+                "title": "Media Type",
+                "type": "string"
+              }
+            },
+            "title": "ImageInput",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "images": {
+            "description": "1-5 product reference images",
+            "items": {
+              "$ref": "#/$defs/ImageInput"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "title": "Images",
+            "type": "array"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Append the generated Card to an existing Project; omit for the key's default 'API Inbox'",
+            "title": "Project Id"
+          },
+          "client_group_id": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Client Group Id"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Category Id"
+          },
+          "concept_id": {
+            "default": "infographic",
+            "maxLength": 50,
+            "title": "Concept Id",
+            "type": "string"
+          },
+          "product_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Product Name"
+          },
+          "user_text": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "What to highlight on the card",
+            "title": "User Text"
+          },
+          "design_key": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Reuse a design style by key",
+            "title": "Design Key"
+          },
+          "creativity": {
+            "default": 0.5,
+            "description": "0=exact copy, 1=free interpretation",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Creativity",
+            "type": "number"
+          },
+          "design_reference_image": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ImageInput"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Style reference image"
+          },
+          "aspect_ratio": {
+            "default": "3:4",
+            "title": "Aspect Ratio",
+            "type": "string"
+          },
+          "webhook_url": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Webhook Url"
+          }
+        },
+        "required": [
+          "images"
+        ],
+        "title": "GenerateCardParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "integer"
+          },
+          "status": {
+            "default": "pending",
+            "title": "Status",
+            "type": "string"
+          },
+          "poll_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Poll Url"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Project Id"
+          },
+          "card_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Card Id"
+          }
+        },
+        "required": [
+          "action_id"
+        ],
+        "title": "GenerateResult",
+        "type": "object"
+      },
+      "event": "aidentika-connector.generate_product_card",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "generate_product_video",
+      "description": "Animate a product image into a short video (5 or 10 seconds), optionally with a motion scenario description. Runs asynchronously: returns an action_id, poll get_action_status until completed, then download_result.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "aidentika.generation.started"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "$defs": {
+          "ImageInput": {
+            "description": "One product/reference image -- provide ONE of url or data.\n\n`data` accepts base64-encoded image bytes OR an `upload_id` (upl_...)\nreturned by `upload_product_image`, per Aidentika's ImageInput schema.",
+            "properties": {
+              "url": {
+                "anyOf": [
+                  {
+                    "maxLength": 2048,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Public HTTPS URL of the image",
+                "title": "Url"
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "maxLength": 21000000,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Base64-encoded image bytes, or an upload_id (upl_...)",
+                "title": "Data"
+              },
+              "media_type": {
+                "default": "image/jpeg",
+                "description": "MIME type hint, used with data",
+                "title": "Media Type",
+                "type": "string"
+              }
+            },
+            "title": "ImageInput",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "image": {
+            "$ref": "#/$defs/ImageInput",
+            "description": "Source image to animate"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Append the generated Card to an existing Project; omit for the key's default 'API Inbox'",
+            "title": "Project Id"
+          },
+          "client_group_id": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Client Group Id"
+          },
+          "scenario": {
+            "default": "",
+            "description": "Video motion description",
+            "maxLength": 1500,
+            "title": "Scenario",
+            "type": "string"
+          },
+          "duration_sec": {
+            "default": 5,
+            "description": "5 or 10 seconds",
+            "title": "Duration Sec",
+            "type": "integer"
+          },
+          "loop_mode": {
+            "default": false,
+            "description": "Seamless loop video",
+            "title": "Loop Mode",
+            "type": "boolean"
+          },
+          "card_mode": {
+            "default": false,
+            "description": "Static camera, preserve text/infographics",
+            "title": "Card Mode",
+            "type": "boolean"
+          },
+          "final_frame": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ImageInput"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Custom final frame, ignored if loop_mode"
+          },
+          "aspect_ratio": {
+            "default": "3:4",
+            "title": "Aspect Ratio",
+            "type": "string"
+          },
+          "webhook_url": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Webhook Url"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "title": "GenerateVideoParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "integer"
+          },
+          "status": {
+            "default": "pending",
+            "title": "Status",
+            "type": "string"
+          },
+          "poll_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Poll Url"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Project Id"
+          },
+          "card_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Card Id"
+          }
+        },
+        "required": [
+          "action_id"
+        ],
+        "title": "GenerateResult",
+        "type": "object"
+      },
+      "event": "aidentika-connector.generate_product_video",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "edit_generated_action",
+      "description": "Request a further edit/improvement of a completed generation (photo/card), by natural-language instruction. Creates a new version under the same Card. Runs asynchronously like any other generation.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "aidentika.generation.started"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "action_id": {
+            "description": "Existing completed action (photo/card) to edit",
+            "title": "Action Id",
+            "type": "integer"
+          },
+          "instruction": {
+            "description": "Edit instruction text",
+            "maxLength": 1000,
+            "title": "Instruction",
+            "type": "string"
+          },
+          "client_group_id": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Client Group Id"
+          },
+          "webhook_url": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Webhook Url"
+          }
+        },
+        "required": [
+          "action_id",
+          "instruction"
+        ],
+        "title": "EditActionParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "integer"
+          },
+          "status": {
+            "default": "pending",
+            "title": "Status",
+            "type": "string"
+          },
+          "poll_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Poll Url"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Project Id"
+          },
+          "card_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Card Id"
+          }
+        },
+        "required": [
+          "action_id"
+        ],
+        "title": "GenerateResult",
+        "type": "object"
+      },
+      "event": "aidentika-connector.edit_generated_action",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "get_action_status",
+      "description": "Check the status of a generation/edit/video action: pending, processing, completed (with result_url, signed for 30 days), or failed (with error_message).",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "action_id": {
+            "description": "Action id returned by a generate/edit call",
+            "title": "Action Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "action_id"
+        ],
+        "title": "GetActionStatusParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "result_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Result Url"
+          },
+          "result_url_expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Result Url Expires At"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Error Message"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Completed At"
+          }
+        },
+        "required": [
+          "action_id",
+          "status",
+          "type"
+        ],
+        "title": "ActionStatus",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "cancel_action",
+      "description": "Cancel a pending or in-progress generation/edit/video action. Any held sparks are released back to your balance.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "aidentika.generation.cancelled"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "action_id": {
+            "description": "Pending/processing action to cancel",
+            "title": "Action Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "action_id"
+        ],
+        "title": "CancelActionParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "integer"
+          },
+          "cancelled": {
+            "title": "Cancelled",
+            "type": "boolean"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id",
+          "cancelled",
+          "message"
+        ],
+        "title": "CancelResult",
+        "type": "object"
+      },
+      "event": "aidentika-connector.cancel_action",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "download_result",
+      "description": "Get the signed download URL for a completed action's result (image or video). Returns a status message instead if the action is not completed yet.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "action_id": {
+            "description": "Completed action whose result to download",
+            "title": "Action Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "action_id"
+        ],
+        "title": "DownloadResultParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "result_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Result Url"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Status"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Message"
+          }
+        },
+        "title": "DownloadResult",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "list_generation_results",
+      "description": "List your past generation/edit/video actions with filters by type, status, date range, project, or correlation tag. Paginated.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "generate",
+                  "edit",
+                  "video"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Filter by action type",
+            "title": "Type"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pending",
+                  "processing",
+                  "completed",
+                  "failed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Status"
+          },
+          "created_after": {
+            "anyOf": [
+              {
+                "maxLength": 10,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "YYYY-MM-DD",
+            "title": "Created After"
+          },
+          "created_before": {
+            "anyOf": [
+              {
+                "maxLength": 10,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "YYYY-MM-DD",
+            "title": "Created Before"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Show only results in this project",
+            "title": "Project Id"
+          },
+          "client_group_id": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Filter by correlation tag sent on generate",
+            "title": "Client Group Id"
+          },
+          "page": {
+            "default": 1,
+            "maximum": 1000,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Page Size",
+            "type": "integer"
+          }
+        },
+        "title": "ListResultsParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "ResultItem": {
+            "properties": {
+              "action_id": {
+                "title": "Action Id",
+                "type": "integer"
+              },
+              "project_id": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Project Id"
+              },
+              "card_id": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Card Id"
+              },
+              "client_group_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Client Group Id"
+              },
+              "type": {
+                "title": "Type",
+                "type": "string"
+              },
+              "status": {
+                "title": "Status",
+                "type": "string"
+              },
+              "result_url": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Result Url"
+              },
+              "result_url_expires_at": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Result Url Expires At"
+              },
+              "storage_status": {
+                "default": "available",
+                "title": "Storage Status",
+                "type": "string"
+              },
+              "error_message": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Error Message"
+              },
+              "created_at": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Created At"
+              },
+              "completed_at": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Completed At"
+              }
+            },
+            "required": [
+              "action_id",
+              "type",
+              "status"
+            ],
+            "title": "ResultItem",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/$defs/ResultItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "default": 0,
+            "title": "Total",
+            "type": "integer"
+          },
+          "page": {
+            "default": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "default": 20,
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total_pages": {
+            "default": 0,
+            "title": "Total Pages",
+            "type": "integer"
+          }
+        },
+        "title": "ResultsList",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "create_aidentika_project",
+      "description": "Create a new Aidentika project (a named container for a batch of Cards) so generations can be grouped under a shared name instead of falling into the default 'API Inbox' project.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "aidentika.project.created"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Display name",
+            "title": "Name"
+          },
+          "product_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Product Name"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Category Id"
+          },
+          "concept_id": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Concept Id"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comment"
+          }
+        },
+        "title": "CreateAidentikaProjectParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "product_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Product Name"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Category Id"
+          },
+          "concept_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Concept Id"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comment"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "AidentikaProject",
+        "type": "object"
+      },
+      "event": "aidentika-connector.create_aidentika_project",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "list_aidentika_projects",
+      "description": "List your Aidentika projects, optionally filtered to only api-created ones, only the default API Inbox, or all.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "limit": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "'api', 'api_inbox', or 'all'; default -- both API sources",
+            "title": "Source"
+          }
+        },
+        "title": "ListAidentikaProjectsParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "AidentikaProject": {
+            "properties": {
+              "id": {
+                "title": "Id",
+                "type": "integer"
+              },
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Name"
+              },
+              "product_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Product Name"
+              },
+              "category_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Category Id"
+              },
+              "concept_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Concept Id"
+              },
+              "comment": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Comment"
+              },
+              "created_at": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Created At"
+              },
+              "updated_at": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Updated At"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "title": "AidentikaProject",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "projects": {
+            "items": {
+              "$ref": "#/$defs/AidentikaProject"
+            },
+            "title": "Projects",
+            "type": "array"
+          },
+          "total": {
+            "default": 0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "title": "AidentikaProjectList",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "get_aidentika_project",
+      "description": "Read one Aidentika project in full, including its Cards.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "project_id": {
+            "title": "Project Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "title": "GetAidentikaProjectParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "product_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Product Name"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Category Id"
+          },
+          "concept_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Concept Id"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comment"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "AidentikaProject",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "update_aidentika_project",
+      "description": "Update an Aidentika project's name, product name, category/concept, or comment. Only given fields change.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "aidentika.project.updated"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "project_id": {
+            "title": "Project Id",
+            "type": "integer"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "product_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Product Name"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Category Id"
+          },
+          "concept_id": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Concept Id"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comment"
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "title": "UpdateAidentikaProjectParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "product_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Product Name"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Category Id"
+          },
+          "concept_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Concept Id"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comment"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "AidentikaProject",
+        "type": "object"
+      },
+      "event": "aidentika-connector.update_aidentika_project",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "get_aidentika_card",
+      "description": "Read one Aidentika Card in full: its status, category/concept, comment, active version, and every generate/edit action (version) recorded under it.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "card_id": {
+            "title": "Card Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "card_id"
+        ],
+        "title": "GetAidentikaCardParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "CardActionSummary": {
+            "properties": {
+              "id": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Id"
+              },
+              "type": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Type"
+              },
+              "status": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Status"
+              },
+              "depth": {
+                "default": 0,
+                "title": "Depth",
+                "type": "integer"
+              },
+              "parent_action_id": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Action Id"
+              },
+              "asset_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Asset Path"
+              },
+              "created_at": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Created At"
+              },
+              "completed_at": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Completed At"
+              }
+            },
+            "title": "CardActionSummary",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "aspect_ratio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Aspect Ratio"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Category Id"
+          },
+          "concept_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Concept Id"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comment"
+          },
+          "card_user_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Card User Text"
+          },
+          "design_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Design Key"
+          },
+          "active_action_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Active Action Id"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Updated At"
+          },
+          "actions": {
+            "items": {
+              "$ref": "#/$defs/CardActionSummary"
+            },
+            "title": "Actions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "status",
+          "content_type"
+        ],
+        "title": "AidentikaCard",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "move_aidentika_card",
+      "description": "Move an Aidentika Card to a different project (must belong to the same account).",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "aidentika.card.moved"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "card_id": {
+            "title": "Card Id",
+            "type": "integer"
+          },
+          "project_id": {
+            "description": "Destination project id (must belong to the same owner)",
+            "title": "Project Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "card_id",
+          "project_id"
+        ],
+        "title": "MoveAidentikaCardParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "CardActionSummary": {
+            "properties": {
+              "id": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Id"
+              },
+              "type": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Type"
+              },
+              "status": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Status"
+              },
+              "depth": {
+                "default": 0,
+                "title": "Depth",
+                "type": "integer"
+              },
+              "parent_action_id": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Action Id"
+              },
+              "asset_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Asset Path"
+              },
+              "created_at": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Created At"
+              },
+              "completed_at": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Completed At"
+              }
+            },
+            "title": "CardActionSummary",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "aspect_ratio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Aspect Ratio"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Category Id"
+          },
+          "concept_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Concept Id"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comment"
+          },
+          "card_user_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Card User Text"
+          },
+          "design_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Design Key"
+          },
+          "active_action_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Active Action Id"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Updated At"
+          },
+          "actions": {
+            "items": {
+              "$ref": "#/$defs/CardActionSummary"
+            },
+            "title": "Actions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "status",
+          "content_type"
+        ],
+        "title": "AidentikaCard",
+        "type": "object"
+      },
+      "event": "aidentika-connector.move_aidentika_card",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "create_aidentika_webhook",
+      "description": "Register a webhook URL to get notified when generations complete or fail, instead of polling get_action_status. Max 5 webhooks per account. The signing secret is shown ONLY in this response -- save it.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "aidentika.webhook.created"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "url": {
+            "description": "HTTPS URL to receive notifications, up to 2000 chars",
+            "title": "Url",
+            "type": "string"
+          },
+          "events": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Subscribe to specific events; omit for all: generation.completed/failed, edit.completed/failed, video.completed/failed",
+            "title": "Events"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "CreateAidentikaWebhookParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "secret": {
+            "description": "Shown only once at creation -- save it for signature verification",
+            "title": "Secret",
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "is_active": {
+            "default": true,
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created At"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "secret"
+        ],
+        "title": "AidentikaWebhookCreated",
+        "type": "object"
+      },
+      "event": "aidentika-connector.create_aidentika_webhook",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "list_aidentika_webhooks",
+      "description": "List your registered Aidentika webhooks (URLs and subscribed events). Secrets are never shown again after creation.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "description": "Empty params for parameterless read tools.",
+        "properties": {},
+        "title": "NoParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "AidentikaWebhookItem": {
+            "properties": {
+              "id": {
+                "title": "Id",
+                "type": "integer"
+              },
+              "url": {
+                "title": "Url",
+                "type": "string"
+              },
+              "events": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Events",
+                "type": "array"
+              },
+              "is_active": {
+                "title": "Is Active",
+                "type": "boolean"
+              },
+              "created_at": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Created At"
+              },
+              "updated_at": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Updated At"
+              }
+            },
+            "required": [
+              "id",
+              "url",
+              "is_active"
+            ],
+            "title": "AidentikaWebhookItem",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "webhooks": {
+            "items": {
+              "$ref": "#/$defs/AidentikaWebhookItem"
+            },
+            "title": "Webhooks",
+            "type": "array"
+          }
+        },
+        "title": "AidentikaWebhookList",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "delete_aidentika_webhook",
+      "description": "Permanently delete an Aidentika webhook. Cannot be undone.",
+      "action_type": "destructive",
+      "chain_callable": true,
+      "effects": [
+        "aidentika.webhook.deleted"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "webhook_id": {
+            "title": "Webhook Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "webhook_id"
+        ],
+        "title": "DeleteAidentikaWebhookParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "deleted": {
+            "title": "Deleted",
+            "type": "boolean"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "deleted",
+          "message"
+        ],
+        "title": "DeleteResult",
+        "type": "object"
+      },
+      "event": "aidentika-connector.delete_aidentika_webhook",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "suggest_product_wishes",
+      "description": "AI-generate marketing description text from 1-5 product photos. Synchronous -- result comes back immediately. Free for the first 1-100 calls/day, then 1 spark per 20 calls.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "$defs": {
+          "ImageInput": {
+            "description": "One product/reference image -- provide ONE of url or data.\n\n`data` accepts base64-encoded image bytes OR an `upload_id` (upl_...)\nreturned by `upload_product_image`, per Aidentika's ImageInput schema.",
+            "properties": {
+              "url": {
+                "anyOf": [
+                  {
+                    "maxLength": 2048,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Public HTTPS URL of the image",
+                "title": "Url"
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "maxLength": 21000000,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Base64-encoded image bytes, or an upload_id (upl_...)",
+                "title": "Data"
+              },
+              "media_type": {
+                "default": "image/jpeg",
+                "description": "MIME type hint, used with data",
+                "title": "Media Type",
+                "type": "string"
+              }
+            },
+            "title": "ImageInput",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "images": {
+            "description": "1-5 product photos",
+            "items": {
+              "$ref": "#/$defs/ImageInput"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "title": "Images",
+            "type": "array"
+          },
+          "category_id": {
+            "maxLength": 50,
+            "title": "Category Id",
+            "type": "string"
+          },
+          "concept_id": {
+            "maxLength": 50,
+            "title": "Concept Id",
+            "type": "string"
+          },
+          "product_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Product Name"
+          }
+        },
+        "required": [
+          "images",
+          "category_id",
+          "concept_id"
+        ],
+        "title": "SuggestWishesParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "SuggestWishesResult",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "suggest_video_scenario",
+      "description": "AI-generate a motion scenario description for a product video from one photo. Use the result in generate_product_video's scenario field. Synchronous, same free-tier/spark rule as suggest_product_wishes.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "$defs": {
+          "ImageInput": {
+            "description": "One product/reference image -- provide ONE of url or data.\n\n`data` accepts base64-encoded image bytes OR an `upload_id` (upl_...)\nreturned by `upload_product_image`, per Aidentika's ImageInput schema.",
+            "properties": {
+              "url": {
+                "anyOf": [
+                  {
+                    "maxLength": 2048,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Public HTTPS URL of the image",
+                "title": "Url"
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "maxLength": 21000000,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Base64-encoded image bytes, or an upload_id (upl_...)",
+                "title": "Data"
+              },
+              "media_type": {
+                "default": "image/jpeg",
+                "description": "MIME type hint, used with data",
+                "title": "Media Type",
+                "type": "string"
+              }
+            },
+            "title": "ImageInput",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "image": {
+            "$ref": "#/$defs/ImageInput",
+            "description": "Product photo"
+          },
+          "product_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Product Name"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Category Id"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "title": "SuggestVideoScenarioParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "scenario": {
+            "title": "Scenario",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenario"
+        ],
+        "title": "SuggestVideoScenarioResult",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    },
+    {
+      "name": "get_helpers_usage",
+      "description": "Check how many AI-helper calls (suggest_product_wishes + suggest_video_scenario combined) you've used today against the free daily allowance.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "description": "Empty params for parameterless read tools.",
+        "properties": {},
+        "title": "NoParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "used_today": {
+            "title": "Used Today",
+            "type": "integer"
+          },
+          "free_limit": {
+            "title": "Free Limit",
+            "type": "integer"
+          },
+          "free_remaining": {
+            "title": "Free Remaining",
+            "type": "integer"
+          },
+          "paid_rate": {
+            "title": "Paid Rate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "used_today",
+          "free_limit",
+          "free_remaining",
+          "paid_rate"
+        ],
+        "title": "HelpersUsage",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "aidentika-connector"
+    }
+  ],
+  "signals": [],
+  "schedules": [],
+  "required_scopes": [],
+  "icon_size_bytes": 299,
+  "lifecycle": {
+    "health_check": {
+      "interval_sec": 60
+    }
+  },
+  "secrets": [
+    {
+      "name": "aidentika_api_key",
+      "description": "Aidentika API key (starts with ak_) -- create one at app.aidentika.com -> Profile -> API. Max 10 keys per account.",
+      "required": false,
+      "write_mode": "both",
+      "max_bytes": 4096,
+      "scope": "user"
+    }
+  ],
+  "panels": [
+    {
+      "panel_id": "secrets",
+      "slot": "right",
+      "title": "Secrets",
+      "tree": {},
+      "icon": "KeyRound",
+      "refresh": "manual",
+      "center_overlay": false
+    }
+  ]
+}

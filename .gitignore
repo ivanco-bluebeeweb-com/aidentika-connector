@@ -5,6 +5,4 @@ __pycache__/
 *.pyo
 .pytest_cache/
 .env
-.imperal/
-imperal.json
 .DS_Store
