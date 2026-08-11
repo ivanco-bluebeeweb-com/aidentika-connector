@@ -8,8 +8,8 @@ sidebar's "App settings" button, every setting here really persists
 (chat.function write calls in handlers_core.py / handlers_webhooks.py),
 each returns ActionResult.summary as the platform's green success/error
 notice, and refresh_panels names exactly what needs to update
-(aid_connect for the sidebar badge/balance, aid_settings for this screen
-itself, aid_results when disconnecting clears the left list too).
+(aid_results for the sidebar status/badge/balance/results list,
+aid_settings for this screen itself).
 """
 from __future__ import annotations
 

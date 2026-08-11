@@ -1,19 +1,26 @@
-"""Panel UI: right = connect + balance/pricing + "App settings" entry point,
-left = recent generation results, center = either one action's detail OR
-(when opened via "App settings") the single settings screen that holds
-EVERY configurable thing this app has -- connection (connect/rotate/
-disconnect) and webhooks (add/delete). Same three-slot shape as DataForSEO
-Connector, adapted for Aidentika: there is no local store cache here --
-projects/cards/results all live on Aidentika's own servers, so panels call
-aid_client directly (read-only GET calls) instead of querying ctx.store.
+"""Panel UI: LEFT sidebar = connection status/form + (once connected) the
+one "App settings" entry point + recent generation results. CENTER = either
+one action's detail OR (when opened via "App settings") the settings
+screen. There is no right-slot panel in this app -- confirmed from a user
+screenshot that only left+center render on their surface, so everything
+that needs to be reachable lives in the left sidebar instead.
+
+Before connecting: the left sidebar shows ONLY the connect form (no point
+rendering an empty results list yet). Once connected: the connect form is
+gone for good (per the standing rule -- stop rendering what there's no
+more need for) and the sidebar shows a compact "Connected" card + the
+"App settings" button + the results list, all in one slot.
+
+There is no local store cache here -- projects/cards/results all live on
+Aidentika's own servers, so panels call aid_client directly (read-only GET
+calls) instead of querying ctx.store.
 
 Follows ~/UI_INTERFACE_STANDARD.md: exactly one secondary "App settings"
-button in the sidebar (see aid_connect_panel), it renders the settings
-screen into the CENTER slot (aid_settings_panel, not a modal), every
-setting there actually persists via a write chat.function, each of those
-returns ActionResult.summary (shown as the platform's green
-success/error notice) and refresh_panels naming exactly the slots that
-need to change.
+button in the sidebar, it renders the settings screen into the CENTER slot
+(aid_settings_panel, not a modal), every setting there actually persists
+via a write chat.function, each of those returns ActionResult.summary
+(shown as the platform's green success/error notice) and refresh_panels
+naming exactly the slots that need to change.
 """
 from __future__ import annotations
 
@@ -62,26 +69,7 @@ def _connect_form(submit_label: str, api_key_placeholder: str = "API key (ak_...
     ])
 
 
-def _connect_card(connected: bool) -> ui.UINode:
-    if connected:
-        return ui.Card(
-            title="Aidentika",
-            subtitle="Connected",
-            content=ui.Stack(direction="v", gap=2, children=[
-                ui.Text("Your API key is saved and verified.", variant="caption"),
-                _settings_button(),
-            ]),
-        )
-    return ui.Card(
-        title="Connect Aidentika",
-        subtitle="Bring your own Aidentika account",
-        content=_connect_form("Verify and connect"),
-    )
-
-
-async def _balance_card(ctx, connected: bool) -> ui.UINode | None:
-    if not connected:
-        return None
+async def _balance_card(ctx) -> ui.UINode | None:
     api_key = await h._get_api_key(ctx)
     try:
         data = await aid.get_balance(ctx, api_key)
@@ -96,52 +84,69 @@ async def _balance_card(ctx, connected: bool) -> ui.UINode | None:
     )
 
 
-@ext.panel("aid_connect", slot="right", title="Aidentika", icon="🪄",
-           default_width=300, min_width=240, max_width=420)
-async def aid_connect_panel(ctx, **kwargs) -> object:
-    connected, _ = await _connection_status(ctx)
-    children: list[ui.UINode] = [_connect_card(connected)]
-    balance = await _balance_card(ctx, connected)
-    if balance is not None:
-        children.append(balance)
-    if not connected:
-        children.append(ui.Alert(
-            title="Not connected yet",
-            message="Connect your Aidentika account to generate product photos, cards, and videos.",
-            type="info",
-        ))
-    return ui.Stack(direction="v", gap=3, children=children)
-
-
-@ext.panel("aid_results", slot="left", title="Results", icon="🖼️")
+@ext.panel("aid_results", slot="left", title="Aidentika", icon="🪄")
 async def aid_results_panel(ctx, **kwargs) -> object:
     connected, _ = await _connection_status(ctx)
+
     if not connected:
-        return ui.Empty(message="Connect Aidentika on the right to see your generations.", icon="🖼️")
+        # Nothing else to render until there's a key -- no empty results
+        # list, no balance card, just the one thing the user can act on.
+        return ui.Stack(direction="v", gap=3, children=[
+            ui.Card(
+                title="Connect Aidentika",
+                subtitle="Bring your own Aidentika account",
+                content=_connect_form("Verify and connect"),
+            ),
+            ui.Alert(
+                title="Not connected yet",
+                message="Connect your Aidentika account to generate product photos, cards, and videos.",
+                type="info",
+            ),
+        ])
+
+    # Connected: the connect form is retired for good -- replaced by a
+    # compact status card, the App settings entry point, balance, and the
+    # actual results list.
+    children: list[ui.UINode] = [
+        ui.Card(
+            title="Aidentika",
+            subtitle="Connected",
+            content=ui.Stack(direction="v", gap=2, children=[
+                ui.Text("Your API key is saved and verified.", variant="caption"),
+                _settings_button(),
+            ]),
+        ),
+    ]
+    balance = await _balance_card(ctx)
+    if balance is not None:
+        children.append(balance)
 
     api_key = await h._get_api_key(ctx)
     try:
         data = await aid.list_results(ctx, api_key, {"page": 1, "page_size": 30})
     except aid.ProviderError as exc:
-        return ui.Alert(title="Could not load results", message=str(exc), type="error")
+        children.append(ui.Alert(title="Could not load results", message=str(exc), type="error"))
+        return ui.Stack(direction="v", gap=3, children=children)
 
     items = data.get("items", [])
     if not items:
-        return ui.Empty(message="No generations yet -- start one from chat.", icon="🖼️")
+        children.append(ui.Empty(message="No generations yet -- start one from chat.", icon="🖼️"))
+    else:
+        list_items = [
+            ui.ListItem(
+                id=str(item["action_id"]),
+                title=f"#{item['action_id']} -- {item.get('type', '?')}",
+                subtitle=f"{item.get('status', '?')}" + (f" -- {item['error_message']}" if item.get("error_message") else ""),
+                on_click=ui.Call("__panel__aid_detail", action_id=item["action_id"]),
+            )
+            for item in items
+        ]
+        children.append(ui.Card(
+            title=f"Recent results ({data.get('total', len(items))})",
+            content=ui.List(items=list_items, searchable=True),
+        ))
 
-    list_items = [
-        ui.ListItem(
-            id=str(item["action_id"]),
-            title=f"#{item['action_id']} -- {item.get('type', '?')}",
-            subtitle=f"{item.get('status', '?')}" + (f" -- {item['error_message']}" if item.get("error_message") else ""),
-            on_click=ui.Call("__panel__aid_detail", action_id=item["action_id"]),
-        )
-        for item in items
-    ]
-    return ui.Stack(direction="v", gap=2, children=[
-        ui.Card(title=f"Recent results ({data.get('total', len(items))})",
-                content=ui.List(items=list_items, searchable=True)),
-    ])
+    return ui.Stack(direction="v", gap=3, children=children)
 
 
 @ext.panel("aid_detail", slot="center", title="Result detail", icon="🔎", center_overlay=True)

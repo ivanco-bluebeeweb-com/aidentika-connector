@@ -65,7 +65,7 @@ async def connect_aidentika(ctx, params: ConnectAidentikaParams) -> ActionResult
     return ActionResult.success(
         data=ProviderConnection(connected=True, message="Aidentika connected and verified."),
         summary="Connected to Aidentika.",
-        refresh_panels=["aid_connect", "aid_settings", "aid_results"],
+        refresh_panels=["aid_settings", "aid_results"],
     )
 
 
@@ -85,7 +85,7 @@ async def disconnect_aidentika(ctx, params: NoParams) -> ActionResult:
     return ActionResult.success(
         data=DisconnectResult(disconnected=True, message="Aidentika API key removed."),
         summary="Disconnected from Aidentika. Nothing on Aidentika itself was touched.",
-        refresh_panels=["aid_connect", "aid_settings", "aid_results"],
+        refresh_panels=["aid_settings", "aid_results"],
     )
 
 
