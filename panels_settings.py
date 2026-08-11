@@ -138,7 +138,7 @@ async def _webhooks_section(ctx, connected: bool) -> ui.UINode:
         action="create_aidentika_webhook",
         submit_label="Add webhook",
         children=[
-            ui.Input(param_name="url", placeholder="https://your-endpoint.example.com/hook", type="url"),
+            ui.Input(param_name="url", placeholder="https://your-endpoint.example.com/hook"),
             ui.MultiSelect(
                 options=_WEBHOOK_EVENT_OPTIONS,
                 param_name="events",
