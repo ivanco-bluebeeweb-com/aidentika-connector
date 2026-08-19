@@ -3189,6 +3189,11 @@
           "webhook_id": {
             "title": "Webhook Id",
             "type": "integer"
+          },
+          "confirm": {
+            "default": false,
+            "title": "Confirm",
+            "type": "boolean"
           }
         },
         "required": [
@@ -3524,7 +3529,7 @@
       "slot": "left",
       "title": "Aidentika",
       "tree": {},
-      "icon": "🪄",
+      "icon": "\ud83e\ude84",
       "refresh": "manual",
       "center_overlay": false
     },
@@ -3533,7 +3538,7 @@
       "slot": "center",
       "title": "Result detail",
       "tree": {},
-      "icon": "🔎",
+      "icon": "\ud83d\udd0e",
       "refresh": "manual",
       "center_overlay": true
     },
@@ -3542,7 +3547,7 @@
       "slot": "center",
       "title": "App settings",
       "tree": {},
-      "icon": "⚙️",
+      "icon": "\u2699\ufe0f",
       "refresh": "manual",
       "center_overlay": true
     }

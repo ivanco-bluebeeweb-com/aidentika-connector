@@ -3189,6 +3189,11 @@
           "webhook_id": {
             "title": "Webhook Id",
             "type": "integer"
+          },
+          "confirm": {
+            "default": false,
+            "title": "Confirm",
+            "type": "boolean"
           }
         },
         "required": [
