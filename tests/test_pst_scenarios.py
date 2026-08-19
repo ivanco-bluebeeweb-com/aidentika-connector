@@ -18,6 +18,7 @@ from schemas import (
     GetActionStatusParams, CancelActionParams, DownloadResultParams,
     UploadProductImageParams, AnalyzeProductParams,
     CreateAidentikaWebhookParams, DeleteAidentikaWebhookParams,
+    CreateAidentikaProjectParams,
     ListResultsParams,
 )
 
@@ -212,3 +213,77 @@ async def test_adversarial_upload_then_analyze_with_reused_upload_id_shape(ctx_c
     result = await h.analyze_product(ctx_connected, params)
     assert result.error is None
     assert result.data.product_name == "Wireless Mouse"
+
+
+# ── Part D2 (SCENARIO_TESTING_STANDARD.md): idempotency / double-invocation ─
+
+@pytest.mark.asyncio
+async def test_d2_double_invocation_generate_photo_spends_sparks_twice(ctx_connected):
+    """Aidentika's own API has no idempotency-key mechanism (confirmed: no
+    request_id/dedup handling anywhere in aid_client.py). Calling
+    generate_product_photo twice with identical params -- e.g. a retried
+    chat turn after a timeout -- creates TWO separate paid actions, not one.
+    This is a documented behavioural risk, not a bug to fix here (the
+    provider itself has no dedup contract to build on) -- but it must be
+    visible and tested so a future idempotency-key addition upstream has a
+    regression test to turn green. (Note: imperal_sdk's MockHTTP does not
+    record call history, so this test proves "both calls independently
+    succeed with no client-side duplicate guard" -- it cannot count real
+    network calls; that would require a live/staging smoke test instead.)
+    """
+    ctx_connected.http.mock_post("/generate/photo", {
+        "action_id": 501, "status": "pending", "poll_url": "/status/501",
+    })
+    params = GeneratePhotoParams(images=[ImageInput(url="https://example.com/p.jpg")])
+    first = await h.generate_product_photo(ctx_connected, params)
+    second = await h.generate_product_photo(ctx_connected, params)
+    assert first.error is None
+    assert second.error is None
+    # No client-side guard rejects the second, identical submission.
+    assert first.data.action_id == second.data.action_id == 501
+
+
+@pytest.mark.asyncio
+async def test_d2_double_invocation_create_project_creates_two_projects(ctx_connected):
+    """create_aidentika_project has no dedup on project name -- calling it
+    twice with the same name (e.g. user re-sends after not seeing a
+    confirmation) creates two distinct projects, not an error and not a
+    silent no-op. Documented expectation, not a defect: Aidentika projects
+    are not name-unique by design."""
+    ctx_connected.http.mock_post("/projects", {"id": 10, "name": "Summer Launch"})
+    params = CreateAidentikaProjectParams(name="Summer Launch")
+    first = await h.create_aidentika_project(ctx_connected, params)
+    second = await h.create_aidentika_project(ctx_connected, params)
+    assert first.error is None
+    assert second.error is None
+
+
+# ── Part D3 (SCENARIO_TESTING_STANDARD.md): security / SSRF surface ────────
+
+@pytest.mark.asyncio
+async def test_d3_no_ssrf_surface_client_never_fetches_user_supplied_urls(ctx_connected):
+    """Security review (static + one runtime probe), not a full SSRF fuzz:
+    aid_client.py's only two network calls (_get/_post) always target a
+    fixed BASE_URL (grep confirms no httpx/requests/urlopen call anywhere in
+    this app builds a URL from ImageInput.url or any other user-supplied
+    field). Image URLs/data the user provides are passed as opaque JSON
+    values INSIDE the request body to Aidentika's own API -- Aidentika's
+    servers, not this connector's code, are what would ever fetch them.
+    There is no code path in this connector that itself opens a connection
+    to a user-controlled address, so classic SSRF (internal IPs, cloud
+    metadata endpoints, redirect-to-localhost) is not reachable through this
+    app's own code. This test feeds an adversarial internal-looking "URL" as
+    plain params data and asserts the call still only reaches the single
+    mocked (fixed) endpoint -- proving the value is inert payload data, not
+    a fetch target. Documented as a regression trip-wire: if a future change
+    adds a new outbound fetch (e.g. a proxy/cache feature), MockHTTP would
+    return its 404 "no mock registered" body instead of the fixed mock,
+    failing this test and forcing an explicit SSRF review at that point.
+    """
+    ctx_connected.http.mock_post("/generate/photo", {
+        "action_id": 502, "status": "pending", "poll_url": "/status/502",
+    })
+    params = GeneratePhotoParams(images=[ImageInput(url="http://169.254.169.254/latest/meta-data/")])
+    result = await h.generate_product_photo(ctx_connected, params)
+    assert result.error is None
+    assert result.data.action_id == 502
