@@ -130,7 +130,6 @@ class AidentikaWebhookList(BaseModel):
 
 class DeleteAidentikaWebhookParams(BaseModel):
     webhook_id: int
-    confirm: bool = False
 
 
 class DeleteResult(BaseModel):

@@ -93,12 +93,6 @@ async def list_aidentika_webhooks(ctx, params: NoParams) -> ActionResult:
 )
 async def delete_aidentika_webhook(ctx, params: DeleteAidentikaWebhookParams) -> ActionResult:
     """Permanently delete an Aidentika webhook."""
-    if not params.confirm:
-        return ActionResult.error(
-            "This permanently deletes the webhook and cannot be undone. "
-            "Pass confirm=true to proceed.",
-            code="CONFIRM_REQUIRED",
-        )
     api_key, err = await _require_key(ctx)
     if err:
         return err
