@@ -48,8 +48,7 @@ async def _connection_status(ctx) -> tuple[bool, str]:
 def _settings_button() -> ui.UINode:
     """The one required secondary entry point into the settings screen."""
     return ui.Button(
-        "App settings", variant="secondary", size="sm", full_width=True,
-        icon="settings", on_click=ui.Call("__panel__aid_settings"),
+        "App settings", variant="secondary", size="sm", icon="settings", on_click=ui.Call("__panel__aid_settings"),
     )
 
 
