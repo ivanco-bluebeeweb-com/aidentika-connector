@@ -41,7 +41,7 @@ async def create_aidentika_project(ctx, params: CreateAidentikaProjectParams) ->
     try:
         data = await aid.create_project(ctx, api_key, body)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     res = AidentikaProject(**data)
     return ActionResult.success(data=res, summary=f"Project created: #{res.id} {res.name or ''}".strip())
 
@@ -65,7 +65,7 @@ async def list_aidentika_projects(ctx, params: ListAidentikaProjectsParams) -> A
     try:
         data = await aid.list_projects(ctx, api_key, query)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     items = [AidentikaProject(**p) for p in data.get("items", data.get("projects", []))]
     return ActionResult.success(
         data=AidentikaProjectList(projects=items, total=data.get("total", len(items))),
@@ -88,7 +88,7 @@ async def get_aidentika_project(ctx, params: GetAidentikaProjectParams) -> Actio
     try:
         data = await aid.get_project(ctx, api_key, params.project_id)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     res = AidentikaProject(**{k: v for k, v in data.items() if k in AidentikaProject.model_fields})
     return ActionResult.success(data=res, summary=f"Project #{res.id}: {res.name or '(unnamed)'}")
 
@@ -112,7 +112,7 @@ async def update_aidentika_project(ctx, params: UpdateAidentikaProjectParams) ->
     try:
         data = await aid.update_project(ctx, api_key, params.project_id, body)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     res = AidentikaProject(**{k: v for k, v in data.items() if k in AidentikaProject.model_fields})
     return ActionResult.success(data=res, summary=f"Project #{res.id} updated.")
 
@@ -138,7 +138,7 @@ async def get_aidentika_card(ctx, params: GetAidentikaCardParams) -> ActionResul
     try:
         data = await aid.get_card(ctx, api_key, params.card_id)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     res = AidentikaCard(**data)
     return ActionResult.success(data=res, summary=f"Card #{res.id}: {res.status}, {len(res.actions)} version(s).")
 
@@ -161,7 +161,7 @@ async def move_aidentika_card(ctx, params: MoveAidentikaCardParams) -> ActionRes
     try:
         data = await aid.move_card(ctx, api_key, params.card_id, {"project_id": params.project_id})
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     res = AidentikaCard(**data)
     return ActionResult.success(data=res, summary=f"Card #{res.id} moved to project #{res.project_id}.")
 

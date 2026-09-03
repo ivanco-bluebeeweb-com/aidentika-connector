@@ -59,7 +59,7 @@ async def connect_aidentika(ctx, params: ConnectAidentikaParams) -> ActionResult
     try:
         await aid.get_balance(ctx, api_key)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
 
     await ctx.secrets.set("aidentika_api_key", api_key)
     return ActionResult.success(
@@ -120,7 +120,7 @@ async def get_aidentika_balance(ctx, params: NoParams) -> ActionResult:
     try:
         data = await aid.get_balance(ctx, api_key)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     info = BalanceInfo(**data)
     return ActionResult.success(
         data=info,
@@ -144,7 +144,7 @@ async def get_aidentika_pricing(ctx, params: NoParams) -> ActionResult:
     try:
         data = await aid.get_pricing(ctx, api_key)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     return ActionResult.success(data=PricingInfo(**data), summary="Fetched Aidentika pricing.")
 
 
@@ -165,7 +165,7 @@ async def list_aidentika_categories(ctx, params: NoParams) -> ActionResult:
     try:
         data = await aid.get_categories(ctx, api_key)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     cats = data.get("categories", [])
     return ActionResult.success(
         data=CategoriesList(categories=cats),
@@ -196,7 +196,7 @@ async def upload_product_image(ctx, params: UploadProductImageParams) -> ActionR
     try:
         data = await aid.upload_image(ctx, api_key, _image_dict(params.image))
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     res = UploadResult(**data)
     return ActionResult.success(
         data=res,
@@ -221,7 +221,7 @@ async def analyze_product(ctx, params: AnalyzeProductParams) -> ActionResult:
     try:
         data = await aid.analyze(ctx, api_key, {"image": _image_dict(params.image)})
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     res = AnalyzeResult(**data)
     return ActionResult.success(
         data=res,

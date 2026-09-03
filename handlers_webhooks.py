@@ -46,7 +46,7 @@ async def create_aidentika_webhook(ctx, params: CreateAidentikaWebhookParams) ->
     try:
         data = await aid.create_webhook(ctx, api_key, body)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     res = AidentikaWebhookCreated(**data)
     return ActionResult.success(
         data=res,
@@ -74,7 +74,7 @@ async def list_aidentika_webhooks(ctx, params: NoParams) -> ActionResult:
     try:
         data = await aid.list_webhooks(ctx, api_key)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     items = data.get("webhooks", [])
     return ActionResult.success(
         data=AidentikaWebhookList(webhooks=items),
@@ -99,7 +99,7 @@ async def delete_aidentika_webhook(ctx, params: DeleteAidentikaWebhookParams) ->
     try:
         await aid.delete_webhook(ctx, api_key, params.webhook_id)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     return ActionResult.success(
         data=DeleteResult(deleted=True, message=f"Webhook {params.webhook_id} deleted."),
         summary=f"Webhook {params.webhook_id} deleted.",
@@ -135,7 +135,7 @@ async def suggest_product_wishes(ctx, params: SuggestWishesParams) -> ActionResu
     try:
         data = await aid.suggest_wishes(ctx, api_key, body)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     return ActionResult.success(data=SuggestWishesResult(**data), summary="Marketing text drafted.")
 
 
@@ -161,7 +161,7 @@ async def suggest_video_scenario(ctx, params: SuggestVideoScenarioParams) -> Act
     try:
         data = await aid.suggest_video_scenario(ctx, api_key, body)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     return ActionResult.success(data=SuggestVideoScenarioResult(**data), summary="Video scenario drafted.")
 
 
@@ -182,6 +182,6 @@ async def get_helpers_usage(ctx, params: NoParams) -> ActionResult:
     try:
         data = await aid.get_helpers_usage(ctx, api_key)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     res = HelpersUsage(**data)
     return ActionResult.success(data=res, summary=f"{res.used_today} helper call(s) used today.")

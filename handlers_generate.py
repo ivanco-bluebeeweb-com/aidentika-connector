@@ -61,7 +61,7 @@ async def generate_product_photo(ctx, params: GeneratePhotoParams) -> ActionResu
     try:
         data = await aid.generate_photo(ctx, api_key, body)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     res = _generate_result(data)
     return ActionResult.success(
         data=res,
@@ -98,7 +98,7 @@ async def generate_product_card(ctx, params: GenerateCardParams) -> ActionResult
     try:
         data = await aid.generate_card(ctx, api_key, body)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     res = _generate_result(data)
     return ActionResult.success(
         data=res,
@@ -134,7 +134,7 @@ async def generate_product_video(ctx, params: GenerateVideoParams) -> ActionResu
     try:
         data = await aid.generate_video(ctx, api_key, body)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     res = _generate_result(data)
     return ActionResult.success(
         data=res,
@@ -166,7 +166,7 @@ async def edit_generated_action(ctx, params: EditActionParams) -> ActionResult:
     try:
         data = await aid.edit_action(ctx, api_key, params.action_id, body)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     res = _generate_result(data)
     return ActionResult.success(
         data=res,
@@ -195,7 +195,7 @@ async def get_action_status(ctx, params: GetActionStatusParams) -> ActionResult:
     try:
         data = await aid.get_status(ctx, api_key, params.action_id)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     res = ActionStatus(**data)
     return ActionResult.success(data=res, summary=f"Action {res.action_id}: {res.status}.")
 
@@ -218,7 +218,7 @@ async def cancel_action(ctx, params: CancelActionParams) -> ActionResult:
     try:
         data = await aid.cancel_action(ctx, api_key, params.action_id)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     res = CancelResult(**data)
     return ActionResult.success(data=res, summary=res.message)
 
@@ -240,7 +240,7 @@ async def download_result(ctx, params: DownloadResultParams) -> ActionResult:
     try:
         data = await aid.download_result(ctx, api_key, params.action_id)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     status = data.get("status")
     if status == "completed" and data.get("result_url"):
         res = DownloadResult(result_url=data["result_url"], status=status, message=None)
@@ -271,7 +271,7 @@ async def list_generation_results(ctx, params: ListResultsParams) -> ActionResul
     try:
         data = await aid.list_results(ctx, api_key, query)
     except aid.ProviderError as exc:
-        return ActionResult.error(str(exc), code=exc.code)
+        return ActionResult.error(str(exc), retryable=getattr(exc, "retryable", False), code=exc.code)
     res = ResultsList(**data)
     return ActionResult.success(
         data=res,

@@ -45,9 +45,10 @@ class ProviderError(Exception):
     else a client-side fallback code (`AID_HTTP_ERROR`).
     """
 
-    def __init__(self, message: str, code: str = "AID_HTTP_ERROR", details: dict | None = None):
+    def __init__(self, message: str, code: str = "AID_HTTP_ERROR", details: dict | None = None, retryable: bool = False):
         super().__init__(message)
         self.code = code
+        self.retryable = retryable
         self.details = details or {}
 
 
@@ -69,7 +70,10 @@ def _raise_for_body(status_code: int, body: Any) -> None:
         code = f"AID_HTTP_{status_code}"
         message = f"Aidentika API returned HTTP {status_code}"
         details = {}
-    raise ProviderError(message, code=code, details=details)
+    retryable = status_code == 429 or status_code >= 500
+    if status_code == 429 and (not isinstance(body, dict) or not body.get("message")):
+        message = "Aidentika's own rate limit was hit. Try again shortly."
+    raise ProviderError(message, code=code, details=details, retryable=retryable)
 
 
 async def _get(ctx, api_key: str, path: str, params: dict | None = None) -> dict:
